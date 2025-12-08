@@ -69,10 +69,29 @@ app.post('/', async (req, res) => {
   const targetUrl = port ? `https://${host}:${port}${path}` : `https://${host}${path}`;
   console.log(`[Proxy] Forwarding ${method} request to: ${targetUrl}`);
 
+  // Detailed logging for debugging /api/1/transactions
+  if (path.includes('/transactions')) {
+    console.log('=== DETAILED REQUEST DEBUG ===');
+    console.log(`[Debug] Path: ${path}`);
+    console.log(`[Debug] Method: ${method}`);
+    console.log(`[Debug] Authorization header: ${authorization}`);
+    console.log(`[Debug] Payload: ${JSON.stringify(payload, null, 2)}`);
+    console.log('=== END DEBUG ===');
+  }
+
   try {
     const result = await makeRequest(host, port, path, method, authorization, payload);
 
     console.log(`[Proxy] Response status: ${result.status}`);
+
+    // Detailed response logging for /transactions
+    if (path.includes('/transactions')) {
+      console.log('=== DETAILED RESPONSE DEBUG ===');
+      console.log(`[Debug] Status: ${result.status} ${result.statusText}`);
+      console.log(`[Debug] Response body: ${result.body}`);
+      console.log(`[Debug] Response headers: ${JSON.stringify(result.headers, null, 2)}`);
+      console.log('=== END RESPONSE DEBUG ===');
+    }
 
     res.json({
       status: result.status,
