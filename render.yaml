@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: payaccsys-proxy
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PROXY_API_KEY
+        sync: false  # Set this in Render dashboard
