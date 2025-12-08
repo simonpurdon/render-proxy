@@ -71,11 +71,20 @@ app.post('/', async (req, res) => {
 
   // Detailed logging for debugging /api/1/transactions
   if (path.includes('/transactions')) {
+    const requestHeaders = {
+      'Content-Type': 'application/json',
+      'Authorization': authorization,
+      'Accept': 'application/json, text/plain, */*',
+      'User-Agent': 'PostmanRuntime/7.32.0',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Connection': 'keep-alive',
+      'Content-Length': payload ? Buffer.byteLength(JSON.stringify(payload)) : 0
+    };
     console.log('=== DETAILED REQUEST DEBUG ===');
-    console.log(`[Debug] Path: ${path}`);
+    console.log(`[Debug] Full URL: ${targetUrl}`);
     console.log(`[Debug] Method: ${method}`);
-    console.log(`[Debug] Authorization header: ${authorization}`);
-    console.log(`[Debug] Payload: ${JSON.stringify(payload, null, 2)}`);
+    console.log(`[Debug] Request Headers: ${JSON.stringify(requestHeaders, null, 2)}`);
+    console.log(`[Debug] Request Body: ${JSON.stringify(payload, null, 2)}`);
     console.log('=== END DEBUG ===');
   }
 
