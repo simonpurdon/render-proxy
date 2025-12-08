@@ -11,9 +11,20 @@ const https = require('https');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Payaccsys UAT endpoint - uses non-standard port 8443
-const PAYACCSYS_HOST = 'uat.payaccsys.com';
-const PAYACCSYS_PORT = 8443;
+// Payaccsys endpoints by environment
+const PAYACCSYS_ENVIRONMENTS = {
+  uat: {
+    host: 'uat.payaccsys.com',
+    port: 8443
+  },
+  production: {
+    host: 'api.payaccsys.com',
+    port: 443
+  }
+};
+
+// Default environment (can be overridden per request)
+const DEFAULT_ENVIRONMENT = process.env.PAYACCSYS_ENVIRONMENT || 'uat';
 
 // API key for securing the proxy
 const PROXY_API_KEY = process.env.PROXY_API_KEY;
@@ -33,7 +44,7 @@ app.post('/', async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const { path, method = 'POST', authorization, payload } = req.body;
+  const { path, method = 'POST', authorization, payload, environment } = req.body;
 
   if (!path || !authorization) {
     return res.status(400).json({
@@ -41,10 +52,22 @@ app.post('/', async (req, res) => {
     });
   }
 
-  console.log(`[Proxy] Forwarding ${method} request to: https://${PAYACCSYS_HOST}:${PAYACCSYS_PORT}${path}`);
+  // Select environment (from request body, or use default)
+  const env = environment || DEFAULT_ENVIRONMENT;
+  const targetEnv = PAYACCSYS_ENVIRONMENTS[env];
+
+  if (!targetEnv) {
+    return res.status(400).json({
+      error: `Invalid environment: ${env}. Valid options: uat, production`
+    });
+  }
+
+  const { host, port } = targetEnv;
+  console.log(`[Proxy] Environment: ${env}`);
+  console.log(`[Proxy] Forwarding ${method} request to: https://${host}:${port}${path}`);
 
   try {
-    const result = await makeRequest(path, method, authorization, payload);
+    const result = await makeRequest(host, port, path, method, authorization, payload);
 
     console.log(`[Proxy] Response status: ${result.status}`);
 
@@ -63,13 +86,13 @@ app.post('/', async (req, res) => {
   }
 });
 
-function makeRequest(path, method, authorization, payload) {
+function makeRequest(host, port, path, method, authorization, payload) {
   return new Promise((resolve, reject) => {
     const postData = payload ? JSON.stringify(payload) : '';
 
     const options = {
-      hostname: PAYACCSYS_HOST,
-      port: PAYACCSYS_PORT,
+      hostname: host,
+      port: port,
       path: path,
       method: method,
       headers: {
@@ -129,6 +152,7 @@ function makeRequest(path, method, authorization, payload) {
 
 app.listen(PORT, () => {
   console.log(`[Proxy] Server running on port ${PORT}`);
-  console.log(`[Proxy] Target: https://${PAYACCSYS_HOST}:${PAYACCSYS_PORT}`);
+  console.log(`[Proxy] Default environment: ${DEFAULT_ENVIRONMENT}`);
+  console.log(`[Proxy] Available environments:`, Object.keys(PAYACCSYS_ENVIRONMENTS).join(', '));
   console.log(`[Proxy] API Key protection: ${PROXY_API_KEY ? 'enabled' : 'disabled'}`);
 });
