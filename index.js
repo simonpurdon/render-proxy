@@ -19,7 +19,7 @@ const PAYACCSYS_ENVIRONMENTS = {
   },
   production: {
     host: 'api.payaccsys.com',
-    port: 443
+    port: null  // No port for production - use default HTTPS
   }
 };
 
@@ -63,8 +63,11 @@ app.post('/', async (req, res) => {
   }
 
   const { host, port } = targetEnv;
-  console.log(`[Proxy] Environment: ${env}`);
-  console.log(`[Proxy] Forwarding ${method} request to: https://${host}:${port}${path}`);
+  console.log(`[Proxy] Received environment from request: "${environment}"`);
+  console.log(`[Proxy] Using environment: ${env}`);
+  console.log(`[Proxy] Target host: ${host}, port: ${port || 'default (443)'}`);
+  const targetUrl = port ? `https://${host}:${port}${path}` : `https://${host}${path}`;
+  console.log(`[Proxy] Forwarding ${method} request to: ${targetUrl}`);
 
   try {
     const result = await makeRequest(host, port, path, method, authorization, payload);
@@ -92,7 +95,6 @@ function makeRequest(host, port, path, method, authorization, payload) {
 
     const options = {
       hostname: host,
-      port: port,
       path: path,
       method: method,
       headers: {
@@ -106,6 +108,11 @@ function makeRequest(host, port, path, method, authorization, payload) {
       // Don't reject self-signed certs (UAT environment may use them)
       rejectUnauthorized: false
     };
+
+    // Only include port if specified (production uses default HTTPS port)
+    if (port) {
+      options.port = port;
+    }
 
     if (method === 'POST' && payload) {
       options.headers['Content-Length'] = Buffer.byteLength(postData);
