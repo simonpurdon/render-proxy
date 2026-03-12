@@ -76,7 +76,6 @@ app.post('/', async (req, res) => {
       'Authorization': authorization,
       'Accept': 'application/json, text/plain, */*',
       'User-Agent': 'PostmanRuntime/7.32.0',
-      'Accept-Encoding': 'gzip, deflate, br',
       'Connection': 'keep-alive',
       'Content-Length': payload ? Buffer.byteLength(JSON.stringify(payload)) : 0
     };
@@ -130,7 +129,6 @@ function makeRequest(host, port, path, method, authorization, payload) {
         'Authorization': authorization,
         'Accept': 'application/json, text/plain, */*',
         'User-Agent': 'PostmanRuntime/7.32.0',
-        'Accept-Encoding': 'gzip, deflate, br',
         'Connection': 'keep-alive'
       },
       // Don't reject self-signed certs (UAT environment may use them)
